@@ -1,3 +1,44 @@
+# 임시 해결책: 직접 라이브러리 설치
+import subprocess
+import sys
+
+def install_requirements():
+    """필요한 라이브러리들을 직접 설치"""
+    packages = [
+        'streamlit==1.28.1',
+        'pandas==1.5.3', 
+        'numpy==1.24.3',
+        'yfinance==0.2.18',
+        'plotly==5.17.0',
+        'scipy==1.10.1'
+    ]
+    
+    for package in packages:
+        try:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', package])
+        except:
+            pass  # 이미 설치된 경우 무시
+
+# 라이브러리 설치 실행
+install_requirements()
+
+# 기존 import들
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+import yfinance as yf
+from datetime import datetime, timedelta
+import warnings
+from typing import Dict, List, Tuple, Optional, Any
+from dataclasses import dataclass, field
+import math
+from scipy import stats
+import io
+import base64
+
 import streamlit as st
 import pandas as pd
 import numpy as np
