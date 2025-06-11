@@ -1,0 +1,88 @@
+#  .streamlit/config.toml
+
+# Streamlit 앱 설정 파일
+# 이 파일은 .streamlit/ 폴더 안에 위치해야 합니다.
+
+[global]
+# 데이터 직렬화 방식 (legacy: 호환성 보장)
+dataFrameSerialization = "legacy"
+
+# 개발 모드 설정
+developmentMode = false
+
+# 로그 레벨 설정 (error, warning, info, debug)
+logLevel = "info"
+
+[theme]
+# 메인 컬러 (버튼, 링크 등에 사용)
+primaryColor = "#1f77b4"
+
+# 배경색 (메인 페이지)
+backgroundColor = "#ffffff"
+
+# 보조 배경색 (사이드바, 위젯 등)
+secondaryBackgroundColor = "#f0f2f6"
+
+# 텍스트 색상
+textColor = "#262730"
+
+# 폰트 패밀리 ("sans serif", "serif", "monospace")
+font = "sans serif"
+
+[server]
+# 헤드리스 모드 (브라우저 자동 열기 비활성화)
+headless = true
+
+# 포트 설정 (로컬 개발시)
+port = 8501
+
+# CORS 설정 (보안)
+enableCORS = false
+
+# XSRF 보호 (보안)
+enableXsrfProtection = false
+
+# 최대 업로드 파일 크기 (MB)
+maxUploadSize = 200
+
+# 최대 메시지 크기 (MB)
+maxMessageSize = 200
+
+# 웹소켓 압축 활성화
+enableWebsocketCompression = false
+
+[browser]
+# 사용 통계 수집 비활성화 (프라이버시)
+gatherUsageStats = false
+
+# 서버 주소 (배포시 자동 설정)
+serverAddress = "0.0.0.0"
+
+# 브라우저에서 서버 연결 확인 간격 (초)
+serverCheckInterval = 5
+
+[runner]
+# 스크립트 실행 시 빠른 재실행 활성화
+fastReruns = true
+
+# 파일 감시자 활성화 (개발시 자동 새로고침)
+installTracer = false
+
+# 매직 커맨드 활성화
+magicEnabled = true
+
+[client]
+# 툴바 모드 ("auto", "developer", "viewer", "minimal")
+toolbarMode = "auto"
+
+# 사이드바 상태 ("auto", "expanded", "collapsed")
+caching = true
+
+[mapbox]
+# Mapbox 토큰 (지도 기능 사용시)
+# token = "your_mapbox_token_here"
+
+[deprecation]
+# 경고 메시지 표시
+showfileUploaderEncoding = false
+showPyplotGlobalUse = false
