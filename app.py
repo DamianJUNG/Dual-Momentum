@@ -1,50 +1,8 @@
-# 임시 해결책: 직접 라이브러리 설치
-import subprocess
-import sys
-
-def install_requirements():
-    """필요한 라이브러리들을 직접 설치"""
-    packages = [
-        'streamlit==1.28.1',
-        'pandas==1.5.3', 
-        'numpy==1.24.3',
-        'yfinance==0.2.18',
-        'plotly==5.17.0',
-        'scipy==1.10.1'
-    ]
-    
-    for package in packages:
-        try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', package])
-        except:
-            pass  # 이미 설치된 경우 무시
-
-# 라이브러리 설치 실행
-install_requirements()
-
-# 기존 import들
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import yfinance as yf
-from datetime import datetime, timedelta
-import warnings
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, field
-import math
-from scipy import stats
-import io
-import base64
-
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import seaborn as sns
 import yfinance as yf
 from datetime import datetime, timedelta
 import warnings
@@ -149,7 +107,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Import modules (they will be defined in the same file for simplicity)
 @dataclass
 class StrategyConfig:
     """전략별 설정 클래스"""
@@ -506,181 +463,100 @@ class PerformanceAnalyzer:
         }
 
 def create_equity_curve_chart(portfolio_returns: pd.Series, benchmark_returns: pd.Series, benchmark_name: str):
-    """누적 수익률 곡선 차트"""
+    """누적 수익률 곡선 차트 - Streamlit 내장 차트 사용"""
     port_cumret = (1 + portfolio_returns).cumprod()
     bench_cumret = (1 + benchmark_returns).cumprod()
     
-    fig = go.Figure()
+    # 데이터 결합
+    chart_data = pd.DataFrame({
+        '포트폴리오': port_cumret.values,
+        f'벤치마크 ({benchmark_name})': bench_cumret.values
+    }, index=port_cumret.index)
     
-    fig.add_trace(go.Scatter(
-        x=port_cumret.index,
-        y=port_cumret.values,
-        mode='lines',
-        name='포트폴리오',
-        line=dict(color='#1f77b4', width=3),
-        hovertemplate='%{x}<br>누적수익률: %{y:.2f}<extra></extra>'
-    ))
+    st.subheader("📈 누적 수익률 곡선")
+    st.line_chart(chart_data, height=500)
     
-    fig.add_trace(go.Scatter(
-        x=bench_cumret.index,
-        y=bench_cumret.values,
-        mode='lines',
-        name=f'벤치마크 ({benchmark_name})',
-        line=dict(color='#ff7f0e', width=2),
-        hovertemplate='%{x}<br>누적수익률: %{y:.2f}<extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title={
-            'text': '📈 누적 수익률 곡선',
-            'x': 0.5,
-            'font': {'size': 20}
-        },
-        xaxis_title='날짜',
-        yaxis_title='누적 수익률',
-        hovermode='x unified',
-        legend=dict(x=0, y=1),
-        height=500,
-        template='plotly_white'
-    )
-    
-    return fig
+    return chart_data
 
 def create_drawdown_chart(portfolio_returns: pd.Series, benchmark_returns: pd.Series, benchmark_name: str):
-    """낙폭 곡선 차트"""
+    """낙폭 곡선 차트 - Streamlit 내장 차트 사용"""
     def calculate_drawdowns(returns):
         cumret = (1 + returns).cumprod()
         rolling_max = cumret.expanding().max()
         return (cumret - rolling_max) / rolling_max
     
-    port_dd = calculate_drawdowns(portfolio_returns)
-    bench_dd = calculate_drawdowns(benchmark_returns)
+    port_dd = calculate_drawdowns(portfolio_returns) * 100
+    bench_dd = calculate_drawdowns(benchmark_returns) * 100
     
-    fig = go.Figure()
+    # 데이터 결합
+    chart_data = pd.DataFrame({
+        '포트폴리오': port_dd.values,
+        f'벤치마크 ({benchmark_name})': bench_dd.values
+    }, index=port_dd.index)
     
-    fig.add_trace(go.Scatter(
-        x=port_dd.index,
-        y=port_dd.values * 100,
-        mode='lines',
-        name='포트폴리오',
-        fill='tonexty',
-        line=dict(color='#d62728', width=2),
-        hovertemplate='%{x}<br>낙폭: %{y:.2f}%<extra></extra>'
-    ))
+    st.subheader("📉 낙폭(Drawdown) 곡선")
+    st.area_chart(chart_data, height=400)
     
-    fig.add_trace(go.Scatter(
-        x=bench_dd.index,
-        y=bench_dd.values * 100,
-        mode='lines',
-        name=f'벤치마크 ({benchmark_name})',
-        line=dict(color='#ff7f0e', width=2),
-        hovertemplate='%{x}<br>낙폭: %{y:.2f}%<extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title={
-            'text': '📉 낙폭(Drawdown) 곡선',
-            'x': 0.5,
-            'font': {'size': 20}
-        },
-        xaxis_title='날짜',
-        yaxis_title='낙폭 (%)',
-        hovermode='x unified',
-        height=400,
-        template='plotly_white'
-    )
-    
-    return fig
+    return chart_data
 
 def create_annual_returns_chart(performance_results: Dict[str, Any]):
-    """연도별 수익률 차트"""
+    """연도별 수익률 차트 - Streamlit 내장 차트 사용"""
     annual_data = performance_results['period_analysis']['annual_returns']
     years = sorted(annual_data['portfolio'].keys())
     
-    port_returns = [annual_data['portfolio'][year] * 100 for year in years]
-    bench_returns = [annual_data['benchmark'][year] * 100 for year in years]
+    # 데이터 프레임 생성
+    chart_data = pd.DataFrame({
+        '포트폴리오': [annual_data['portfolio'][year] * 100 for year in years],
+        '벤치마크': [annual_data['benchmark'][year] * 100 for year in years]
+    }, index=years)
     
-    fig = go.Figure(data=[
-        go.Bar(name='포트폴리오', x=years, y=port_returns, 
-               marker_color='#1f77b4', 
-               hovertemplate='%{x}<br>수익률: %{y:.2f}%<extra></extra>'),
-        go.Bar(name='벤치마크', x=years, y=bench_returns, 
-               marker_color='#ff7f0e',
-               hovertemplate='%{x}<br>수익률: %{y:.2f}%<extra></extra>')
-    ])
+    st.subheader("📊 연도별 수익률 비교")
+    st.bar_chart(chart_data, height=400)
     
-    fig.update_layout(
-        title={
-            'text': '📊 연도별 수익률 비교',
-            'x': 0.5,
-            'font': {'size': 20}
-        },
-        xaxis_title='연도',
-        yaxis_title='수익률 (%)',
-        barmode='group',
-        height=400,
-        template='plotly_white'
-    )
-    
-    return fig
+    return chart_data
 
-def create_monthly_selections_chart(detailed_df: pd.DataFrame, config: Configuration):
-    """매월 선택 종목 차트"""
+def create_monthly_selections_heatmap(detailed_df: pd.DataFrame, config: Configuration):
+    """월별 선택 종목 히트맵 - Matplotlib 사용"""
     recent_data = detailed_df.tail(24)
     
-    fig = make_subplots(
-        rows=2, cols=1,
-        subplot_titles=('월별 포트폴리오 수익률', '선택된 자산 (색상: 개별 수익률)'),
-        vertical_spacing=0.1,
-        row_heights=[0.4, 0.6]
-    )
+    # 월별 포트폴리오 수익률 차트
+    monthly_returns = pd.DataFrame({
+        '월별 수익률 (%)': [ret * 100 for ret in recent_data['portfolio_return']],
+    }, index=[d.strftime('%Y-%m') for d in recent_data['date']])
     
-    # 월별 수익률
-    colors = ['green' if x > 0 else 'red' for x in recent_data['portfolio_return']]
-    fig.add_trace(
-        go.Bar(
-            x=[d.strftime('%Y-%m') for d in recent_data['date']],
-            y=recent_data['portfolio_return'] * 100,
-            name='포트폴리오 수익률 (%)',
-            marker_color=colors
-        ),
-        row=1, col=1
-    )
+    st.subheader("📊 월별 포트폴리오 수익률")
+    st.bar_chart(monthly_returns, height=300)
     
-    # 선택된 자산 히트맵
-    assets = config.universe_tickers
-    selection_matrix = np.zeros((len(assets), len(recent_data)))
+    # 선택된 자산 표시 (표 형태)
+    st.subheader("🎯 최근 선택 종목 이력")
     
-    for j, (_, row) in enumerate(recent_data.iterrows()):
-        for asset in row['selected_assets']:
-            if asset in assets:
-                asset_idx = assets.index(asset)
-                individual_ret = row['individual_returns'].get(asset, 0)
-                selection_matrix[asset_idx, j] = individual_ret * 100
+    selection_table = []
+    for _, row in recent_data.iterrows():
+        selection_table.append({
+            '날짜': row['date'].strftime('%Y-%m'),
+            '선택 자산': ', '.join(row['selected_assets']),
+            '수익률': f"{row['portfolio_return']*100:+.2f}%"
+        })
     
-    fig.add_trace(
-        go.Heatmap(
-            z=selection_matrix,
-            x=[d.strftime('%Y-%m') for d in recent_data['date']],
-            y=assets,
-            colorscale='RdYlGn',
-            colorbar=dict(title="개별 수익률 (%)"),
-            zmid=0,
-            name='자산 선택'
-        ),
-        row=2, col=1
-    )
+    st.dataframe(pd.DataFrame(selection_table), use_container_width=True)
+
+def create_matplotlib_chart(data, title, chart_type='line'):
+    """Matplotlib 차트 생성 헬퍼"""
+    fig, ax = plt.subplots(figsize=(12, 6))
     
-    fig.update_layout(
-        title={
-            'text': '🎯 월별 선택 종목 및 수익률',
-            'x': 0.5,
-            'font': {'size': 20}
-        },
-        height=700,
-        showlegend=False,
-        template='plotly_white'
-    )
+    if chart_type == 'line':
+        for column in data.columns:
+            ax.plot(data.index, data[column], label=column, linewidth=2)
+    elif chart_type == 'bar':
+        data.plot(kind='bar', ax=ax)
+    
+    ax.set_title(title, fontsize=16, fontweight='bold')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    # 스타일링
+    plt.style.use('seaborn-v0_8')
+    plt.tight_layout()
     
     return fig
 
@@ -919,20 +795,10 @@ def main():
             ])
             
             with tab1:
-                st.plotly_chart(
-                    create_equity_curve_chart(portfolio_returns, benchmark_returns, benchmark_ticker),
-                    use_container_width=True
-                )
-                
-                st.plotly_chart(
-                    create_drawdown_chart(portfolio_returns, benchmark_returns, benchmark_ticker),
-                    use_container_width=True
-                )
-                
-                st.plotly_chart(
-                    create_annual_returns_chart(performance_results),
-                    use_container_width=True
-                )
+                # Streamlit 내장 차트 사용
+                create_equity_curve_chart(portfolio_returns, benchmark_returns, benchmark_ticker)
+                create_drawdown_chart(portfolio_returns, benchmark_returns, benchmark_ticker)
+                create_annual_returns_chart(performance_results)
             
             with tab2:
                 col1, col2 = st.columns(2)
@@ -970,10 +836,8 @@ def main():
                     st.dataframe(pd.DataFrame(relative_data), use_container_width=True)
             
             with tab3:
-                st.plotly_chart(
-                    create_monthly_selections_chart(detailed_df, config),
-                    use_container_width=True
-                )
+                # 포지션 분석
+                create_monthly_selections_heatmap(detailed_df, config)
                 
                 # 자산별 선택 빈도
                 st.markdown("### 🎯 자산별 선택 통계")
@@ -1101,7 +965,7 @@ def main():
                 <li><strong>모멘텀 기반 전략:</strong> 상대강도를 활용한 자산 선택</li>
                 <li><strong>리스크 관리:</strong> 스톱로스, 거래비용 반영</li>
                 <li><strong>상세 분석:</strong> 30+ 성과 지표 및 리스크 메트릭</li>
-                <li><strong>시각화:</strong> 인터랙티브 차트 및 그래프</li>
+                <li><strong>시각화:</strong> Streamlit 내장 차트 및 matplotlib</li>
                 <li><strong>데이터 내보내기:</strong> CSV, JSON 형태 다운로드</li>
             </ul>
         </div>
